@@ -55,44 +55,36 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: const Color(0xFFF9FAFB),
       body: Stack(
         children: [
-          // Background Gradient Blobs
+          // Playful Pastel Background Blobs
           Positioned(
             top: -100,
-            left: -100,
+            left: -50,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 350,
+              height: 350,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                 boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
-                    blurRadius: 100,
-                    spreadRadius: 50,
-                  ),
+                  BoxShadow(color: Theme.of(context).colorScheme.primary.withOpacity(0.15), blurRadius: 100, spreadRadius: 50),
                 ],
               ),
             ),
           ),
           Positioned(
             bottom: -100,
-            right: -100,
+            right: -50,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 350,
+              height: 350,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
                 boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
-                    blurRadius: 100,
-                    spreadRadius: 50,
-                  ),
+                  BoxShadow(color: Theme.of(context).colorScheme.secondary.withOpacity(0.1), blurRadius: 100, spreadRadius: 50),
                 ],
               ),
             ),
@@ -102,126 +94,151 @@ class _LoginScreenState extends State<LoginScreen> {
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(32),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                  child: Container(
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(32),
-                      border: Border.all(color: Colors.white.withOpacity(0.1), width: 1.5),
+              child: Container(
+                padding: const EdgeInsets.all(40),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(40),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 40,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 20),
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.lock_outline_rounded, size: 64, color: Colors.white),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Things Collector',
-                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Sign in to access your vault',
-                          style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.6)),
-                        ),
-                        const SizedBox(height: 32),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.lock_rounded, size: 48, color: Theme.of(context).colorScheme.primary),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Welcome Back',
+                      style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF111827), letterSpacing: -1),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Sign in to access your vault',
+                      style: TextStyle(fontSize: 16, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 40),
 
-                        if (_errorMessage.isNotEmpty) ...[
-                          Text(_errorMessage, style: const TextStyle(color: Colors.redAccent, fontSize: 14), textAlign: TextAlign.center),
-                          const SizedBox(height: 16),
+                    if (_errorMessage.isNotEmpty) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(_errorMessage, style: const TextStyle(color: Color(0xFFEF4444), fontSize: 14, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+
+                    TextField(
+                      controller: _emailController,
+                      style: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w600),
+                      decoration: InputDecoration(
+                        hintText: 'Email address',
+                        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500),
+                        filled: true,
+                        fillColor: const Color(0xFFF3F4F6),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                        prefixIcon: const Padding(
+                          padding: EdgeInsets.only(left: 10, right: 10),
+                          child: Icon(Icons.email_rounded, color: Color(0xFF9CA3AF)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      style: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w600),
+                      decoration: InputDecoration(
+                        hintText: 'Password',
+                        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500),
+                        filled: true,
+                        fillColor: const Color(0xFFF3F4F6),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                        prefixIcon: const Padding(
+                          padding: EdgeInsets.only(left: 10, right: 10),
+                          child: Icon(Icons.lock_rounded, color: Color(0xFF9CA3AF)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    if (_isLoading)
+                      CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)
+                    else ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _signIn,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            elevation: 8,
+                            shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          ),
+                          child: const Text('Sign In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: _signUp,
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF6B7280),
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          ),
+                          child: const Text('Create Account', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(child: Divider(color: const Color(0xFFE5E7EB), thickness: 1.5)),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text('OR', style: TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.bold)),
+                          ),
+                          Expanded(child: Divider(color: const Color(0xFFE5E7EB), thickness: 1.5)),
                         ],
-
-                        TextField(
-                          controller: _emailController,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            hintText: 'Email',
-                            hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.05),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                            prefixIcon: Icon(Icons.email_outlined, color: Colors.white.withOpacity(0.6)),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _signInWithGoogle,
+                          icon: Image.network('https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg', width: 24, height: 24),
+                          label: const Text('Continue with Google', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF111827),
+                            side: const BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _passwordController,
-                          obscureText: true,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            hintText: 'Password',
-                            hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.05),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                            prefixIcon: Icon(Icons.lock_outline, color: Colors.white.withOpacity(0.6)),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-
-                        if (_isLoading)
-                          const CircularProgressIndicator()
-                        else ...[
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _signIn,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.primary,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              child: const Text('Sign In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton(
-                              onPressed: _signUp,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                side: BorderSide(color: Colors.white.withOpacity(0.2)),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              child: const Text('Create Account'),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              Expanded(child: Divider(color: Colors.white.withOpacity(0.2))),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
-                                child: Text('OR', style: TextStyle(color: Colors.white.withOpacity(0.5))),
-                              ),
-                              Expanded(child: Divider(color: Colors.white.withOpacity(0.2))),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _signInWithGoogle,
-                              icon: const Icon(Icons.g_mobiledata_rounded, size: 32),
-                              label: const Text('Continue with Google', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.black87,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                            ),
-                          ),
-                        ]
-                      ],
-                    ),
-                  ),
+                      ),
+                    ]
+                  ],
                 ),
               ),
             ),

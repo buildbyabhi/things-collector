@@ -26,13 +26,14 @@ class ThingsCollectorApp extends StatelessWidget {
       title: 'Things Collector',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        colorScheme: ColorScheme.dark(
-          primary: const Color(0xFF6366F1),
-          secondary: const Color(0xFFEC4899),
-          surface: Colors.white.withOpacity(0.05),
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF9FAFB),
+        colorScheme: const ColorScheme.light(
+          primary: Color(0xFF8B5CF6), // Soft Violet
+          secondary: Color(0xFFF43F5E), // Soft Rose
+          surface: Colors.white,
         ),
+        fontFamily: 'Inter', // Or rely on system sans-serif which is very clean
         useMaterial3: true,
       ),
       home: StreamBuilder<User?>(
@@ -74,67 +75,93 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: const Color(0xFF1E1E1E),
-              title: const Text('Add New Thing', style: TextStyle(color: Colors.white)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  DropdownButtonFormField<String>(
-                    value: selectedCategory,
-                    dropdownColor: const Color(0xFF2C2C2C),
-                    items: ['Notes', 'Links', 'Ideas']
-                        .map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(color: Colors.white))))
-                        .toList(),
-                    onChanged: (val) => setState(() => selectedCategory = val!),
-                    decoration: const InputDecoration(
-                      labelText: 'Category',
-                      labelStyle: TextStyle(color: Colors.grey),
-                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+              child: Padding(
+                padding: const EdgeInsets.all(28.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Add New Thing', style: TextStyle(color: Color(0xFF111827), fontSize: 24, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 24),
+                    DropdownButtonFormField<String>(
+                      value: selectedCategory,
+                      dropdownColor: Colors.white,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF6B7280)),
+                      items: ['Notes', 'Links', 'Ideas']
+                          .map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w600))))
+                          .toList(),
+                      onChanged: (val) => setState(() => selectedCategory = val!),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: const Color(0xFFF3F4F6),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      ),
                     ),
-                  ),
-                  TextField(
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      labelText: 'Title',
-                      labelStyle: TextStyle(color: Colors.grey),
-                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-                      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF6366F1))),
+                    const SizedBox(height: 16),
+                    TextField(
+                      style: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w500),
+                      decoration: InputDecoration(
+                        hintText: 'Title',
+                        hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                        filled: true,
+                        fillColor: const Color(0xFFF3F4F6),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      ),
+                      onChanged: (val) => title = val,
                     ),
-                    onChanged: (val) => title = val,
-                  ),
-                  TextField(
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      labelText: 'Notes / Link',
-                      labelStyle: TextStyle(color: Colors.grey),
-                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-                      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF6366F1))),
+                    const SizedBox(height: 16),
+                    TextField(
+                      style: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w500),
+                      decoration: InputDecoration(
+                        hintText: 'Notes / URL Link',
+                        hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                        filled: true,
+                        fillColor: const Color(0xFFF3F4F6),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      ),
+                      maxLines: 3,
+                      minLines: 1,
+                      onChanged: (val) => subtitle = val,
                     ),
-                    maxLines: 3,
-                    minLines: 1,
-                    onChanged: (val) => subtitle = val,
-                  ),
-                ],
+                    const SizedBox(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF6B7280),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            _syncService.addThing(title, subtitle, selectedCategory);
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    _syncService.addThing(title, subtitle, selectedCategory);
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Save'),
-                ),
-              ],
             );
           }
         );
@@ -147,41 +174,33 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Gradient Blobs
+          // Playful Pastel Background Blobs
           Positioned(
             top: -100,
             left: -100,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 400,
+              height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
                 boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
-                    blurRadius: 100,
-                    spreadRadius: 50,
-                  ),
+                  BoxShadow(color: Theme.of(context).colorScheme.primary.withOpacity(0.08), blurRadius: 100, spreadRadius: 50),
                 ],
               ),
             ),
           ),
           Positioned(
-            bottom: -100,
+            bottom: -50,
             right: -100,
             child: Container(
               width: 300,
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+                color: const Color(0xFF10B981).withOpacity(0.08), // Soft Emerald
                 boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
-                    blurRadius: 100,
-                    spreadRadius: 50,
-                  ),
+                  BoxShadow(color: const Color(0xFF10B981).withOpacity(0.08), blurRadius: 100, spreadRadius: 50),
                 ],
               ),
             ),
@@ -193,24 +212,31 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 8.0),
+                  padding: const EdgeInsets.fromLTRB(28.0, 32.0, 24.0, 16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
                         'My Things',
                         style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -1,
-                          color: Colors.white,
+                          fontSize: 40,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1.5,
+                          color: Color(0xFF111827),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.logout_rounded, color: Colors.white70),
-                        onPressed: () async {
-                          await _authService.signOut();
-                        },
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.logout_rounded, color: Color(0xFF6B7280)),
+                          onPressed: () async {
+                            await _authService.signOut();
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -218,21 +244,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 
                 // Categories
                 SizedBox(
-                  height: 50,
+                  height: 60,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     itemCount: _categories.length,
                     itemBuilder: (context, index) {
                       final cat = _categories[index];
                       final isSelected = _selectedFilter == cat;
                       return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: ChoiceChip(
-                          label: Text(cat, style: TextStyle(color: isSelected ? Colors.white : Colors.white70)),
+                        padding: const EdgeInsets.only(right: 12.0),
+                        child: FilterChip(
+                          label: Text(cat, style: TextStyle(color: isSelected ? Colors.white : const Color(0xFF4B5563), fontWeight: FontWeight.bold, fontSize: 15)),
                           selected: isSelected,
                           selectedColor: Theme.of(context).colorScheme.primary,
-                          backgroundColor: Colors.white.withOpacity(0.1),
+                          backgroundColor: Colors.white,
+                          elevation: isSelected ? 4 : 0,
+                          pressElevation: 0,
+                          shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: isSelected ? Colors.transparent : const Color(0xFFE5E7EB))),
+                          showCheckmark: false,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           onSelected: (selected) {
                             if (selected) setState(() => _selectedFilter = cat);
                           },
@@ -241,16 +273,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                 ),
+                const SizedBox(height: 8),
 
                 Expanded(
                   child: StreamBuilder<List<Thing>>(
                     stream: _syncService.getThingsStream(),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.white)));
+                        return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Color(0xFFEF4444))));
                       }
                       if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
+                        return Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary));
                       }
 
                       var things = snapshot.data!;
@@ -260,10 +293,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       
                       if (things.isEmpty) {
                         return Center(
-                          child: Text(
-                            'Nothing here.\nTap + to add a thing!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.inbox_rounded, size: 80, color: const Color(0xFFD1D5DB)),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Nothing here yet.\nTap + to start collecting!',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: const Color(0xFF6B7280), fontSize: 18, fontWeight: FontWeight.w600, height: 1.4),
+                              ),
+                            ],
                           ),
                         );
                       }
@@ -272,9 +312,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 0.75,
+                          crossAxisSpacing: 20,
+                          mainAxisSpacing: 20,
+                          childAspectRatio: 0.72,
                         ),
                         itemCount: things.length,
                         itemBuilder: (context, index) {
@@ -286,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             onLongPress: () {
                               _syncService.deleteThing(thing.id);
                             },
-                            child: GlassCard(thing: thing),
+                            child: LovableCard(thing: thing),
                           );
                         },
                       );
@@ -300,21 +340,22 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddDialog,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Thing', style: TextStyle(fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.add_rounded, size: 24),
+        label: const Text('Add Thing', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 8,
+        shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
     );
   }
 }
 
-class GlassCard extends StatelessWidget {
+class LovableCard extends StatelessWidget {
   final Thing thing;
 
-  const GlassCard({super.key, required this.thing});
+  const LovableCard({super.key, required this.thing});
 
   IconData _getIcon() {
     switch (thing.category) {
@@ -326,69 +367,87 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1.5),
-            image: thing.imageUrl != null
-                ? DecorationImage(
-                    image: NetworkImage(thing.imageUrl!),
-                    fit: BoxFit.cover,
-                    colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.6), BlendMode.darken),
-                  )
-                : null,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 24,
+            spreadRadius: 0,
+            offset: const Offset(0, 12),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (thing.imageUrl != null)
+              Expanded(
+                flex: 3,
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage(thing.imageUrl!),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                flex: 3,
+                child: Container(
+                  width: double.infinity,
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                  child: Center(
+                    child: Icon(_getIcon(), size: 48, color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
+                  ),
+                ),
+              ),
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(_getIcon(), color: Colors.white, size: 20),
+                      child: Text(
+                        thing.category,
+                        style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                      ),
                     ),
-                    if (thing.category != 'Notes')
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(thing.category, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    Text(
+                      thing.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Color(0xFF111827), fontSize: 17, fontWeight: FontWeight.w800, height: 1.2),
+                    ),
+                    if (thing.subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        thing.subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.w500),
                       ),
+                    ]
                   ],
                 ),
-                const Spacer(),
-                Text(
-                  thing.title,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600, height: 1.2),
-                ),
-                if (thing.subtitle.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    thing.subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13),
-                  ),
-                ]
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -404,53 +463,68 @@ class DetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Color(0xFF111827)),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-            onPressed: () {
-              syncService.deleteThing(thing.id);
-              Navigator.pop(context);
-            },
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444)),
+              onPressed: () {
+                syncService.deleteThing(thing.id);
+                Navigator.pop(context);
+              },
+            ),
           )
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(28.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (thing.imageUrl != null) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.network(thing.imageUrl!, width: double.infinity, fit: BoxFit.cover),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 30, offset: const Offset(0, 15)),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: Image.network(thing.imageUrl!, width: double.infinity, fit: BoxFit.cover),
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
             ],
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(thing.category, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
+              child: Text(thing.category, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               thing.title,
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white, height: 1.2),
+              style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: Color(0xFF111827), height: 1.1, letterSpacing: -1),
             ),
             const SizedBox(height: 24),
             Text(
               thing.subtitle,
-              style: TextStyle(fontSize: 18, color: Colors.white.withOpacity(0.8), height: 1.5),
+              style: const TextStyle(fontSize: 18, color: Color(0xFF4B5563), height: 1.6, fontWeight: FontWeight.w500),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 48),
             if (thing.url != null)
               SizedBox(
                 width: double.infinity,
@@ -462,12 +536,14 @@ class DetailScreen extends StatelessWidget {
                     }
                   },
                   icon: const Icon(Icons.open_in_new_rounded),
-                  label: const Text('Open Link', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  label: const Text('Open Link', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 10,
+                    shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   ),
                 ),
               ),
