@@ -9,6 +9,8 @@ import 'sync_service.dart';
 import 'auth_service.dart';
 import 'login_screen.dart';
 
+final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -22,32 +24,49 @@ class ThingsCollectorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Things Collector',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFFF9FAFB),
-        colorScheme: const ColorScheme.light(
-          primary: Color(0xFF8B5CF6), // Soft Violet
-          secondary: Color(0xFFF43F5E), // Soft Rose
-          surface: Colors.white,
-        ),
-        fontFamily: 'Inter', // Or rely on system sans-serif which is very clean
-        useMaterial3: true,
-      ),
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
-          }
-          if (snapshot.hasData) {
-            return const HomeScreen();
-          }
-          return const LoginScreen();
-        },
-      ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (_, ThemeMode currentMode, __) {
+        return MaterialApp(
+          title: 'Things Collector',
+          debugShowCheckedModeBanner: false,
+          themeMode: currentMode,
+          theme: ThemeData(
+            brightness: Brightness.light,
+            scaffoldBackgroundColor: const Color(0xFFF9FAFB),
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF8B5CF6), // Soft Violet
+              secondary: Color(0xFFF43F5E), // Soft Rose
+              surface: Colors.white,
+            ),
+            fontFamily: 'Inter',
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            scaffoldBackgroundColor: const Color(0xFF111827), // Dark slate
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFF8B5CF6),
+              secondary: Color(0xFFF43F5E),
+              surface: Color(0xFF1F2937), // Dark surface
+            ),
+            fontFamily: 'Inter',
+            useMaterial3: true,
+          ),
+          home: StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+              }
+              if (snapshot.hasData) {
+                return const HomeScreen();
+              }
+              return const LoginScreen();
+            },
+          ),
+        );
+      },
     );
   }
 }
@@ -66,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<String> _categories = ['All', 'Notes', 'Links', 'Ideas'];
 
   void _showAddDialog() {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
     String title = '';
     String subtitle = '';
     String selectedCategory = 'Notes';
@@ -76,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).colorScheme.surface,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
               child: Padding(
                 padding: const EdgeInsets.all(28.0),
@@ -84,31 +104,31 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Add New Thing', style: TextStyle(color: Color(0xFF111827), fontSize: 24, fontWeight: FontWeight.bold)),
+                    Text('Add New Thing', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontSize: 24, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 24),
                     DropdownButtonFormField<String>(
                       value: selectedCategory,
-                      dropdownColor: Colors.white,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF6B7280)),
+                      dropdownColor: Theme.of(context).colorScheme.surface,
+                      icon: Icon(Icons.keyboard_arrow_down_rounded, color: isDark ? Colors.grey[400] : const Color(0xFF6B7280)),
                       items: ['Notes', 'Links', 'Ideas']
-                          .map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w600))))
+                          .map((c) => DropdownMenuItem(value: c, child: Text(c, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.w600))))
                           .toList(),
                       onChanged: (val) => setState(() => selectedCategory = val!),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: const Color(0xFFF3F4F6),
+                        fillColor: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
-                      style: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w500),
+                      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.w500),
                       decoration: InputDecoration(
                         hintText: 'Title',
-                        hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                        hintStyle: TextStyle(color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)),
                         filled: true,
-                        fillColor: const Color(0xFFF3F4F6),
+                        fillColor: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       ),
@@ -116,12 +136,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 16),
                     TextField(
-                      style: const TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w500),
+                      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.w500),
                       decoration: InputDecoration(
                         hintText: 'Notes / URL Link',
-                        hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                        hintStyle: TextStyle(color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)),
                         filled: true,
-                        fillColor: const Color(0xFFF3F4F6),
+                        fillColor: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       ),
@@ -136,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         TextButton(
                           onPressed: () => Navigator.pop(context),
                           style: TextButton.styleFrom(
-                            foregroundColor: const Color(0xFF6B7280),
+                            foregroundColor: isDark ? Colors.grey[400] : const Color(0xFF6B7280),
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
@@ -171,6 +191,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -183,9 +205,9 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.2 : 0.08),
                 boxShadow: [
-                  BoxShadow(color: Theme.of(context).colorScheme.primary.withOpacity(0.08), blurRadius: 100, spreadRadius: 50),
+                  BoxShadow(color: Theme.of(context).colorScheme.primary.withOpacity(isDark ? 0.2 : 0.08), blurRadius: 100, spreadRadius: 50),
                 ],
               ),
             ),
@@ -198,9 +220,9 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF10B981).withOpacity(0.08), // Soft Emerald
+                color: const Color(0xFF10B981).withOpacity(isDark ? 0.15 : 0.08), // Soft Emerald
                 boxShadow: [
-                  BoxShadow(color: const Color(0xFF10B981).withOpacity(0.08), blurRadius: 100, spreadRadius: 50),
+                  BoxShadow(color: const Color(0xFF10B981).withOpacity(isDark ? 0.15 : 0.08), blurRadius: 100, spreadRadius: 50),
                 ],
               ),
             ),
@@ -216,27 +238,45 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'My Things',
                         style: TextStyle(
                           fontSize: 40,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -1.5,
-                          color: Color(0xFF111827),
+                          color: isDark ? Colors.white : const Color(0xFF111827),
                         ),
                       ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.logout_rounded, color: Color(0xFF6B7280)),
-                          onPressed: () async {
-                            await _authService.signOut();
-                          },
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                            ),
+                            child: IconButton(
+                              icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded, color: isDark ? Colors.amber : const Color(0xFF6B7280)),
+                              onPressed: () {
+                                themeNotifier.value = isDark ? ThemeMode.light : ThemeMode.dark;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                            ),
+                            child: IconButton(
+                              icon: Icon(Icons.logout_rounded, color: isDark ? Colors.grey[400] : const Color(0xFF6B7280)),
+                              onPressed: () async {
+                                await _authService.signOut();
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -255,14 +295,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 12.0),
                         child: FilterChip(
-                          label: Text(cat, style: TextStyle(color: isSelected ? Colors.white : const Color(0xFF4B5563), fontWeight: FontWeight.bold, fontSize: 15)),
+                          label: Text(cat, style: TextStyle(color: isSelected ? Colors.white : (isDark ? Colors.grey[300] : const Color(0xFF4B5563)), fontWeight: FontWeight.bold, fontSize: 15)),
                           selected: isSelected,
                           selectedColor: Theme.of(context).colorScheme.primary,
-                          backgroundColor: Colors.white,
+                          backgroundColor: Theme.of(context).colorScheme.surface,
                           elevation: isSelected ? 4 : 0,
                           pressElevation: 0,
                           shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.4),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: isSelected ? Colors.transparent : const Color(0xFFE5E7EB))),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: isSelected ? Colors.transparent : (isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB)))),
                           showCheckmark: false,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           onSelected: (selected) {
@@ -296,12 +336,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.inbox_rounded, size: 80, color: const Color(0xFFD1D5DB)),
+                              Icon(Icons.inbox_rounded, size: 80, color: isDark ? const Color(0xFF4B5563) : const Color(0xFFD1D5DB)),
                               const SizedBox(height: 16),
                               Text(
                                 'Nothing here yet.\nTap + to start collecting!',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: const Color(0xFF6B7280), fontSize: 18, fontWeight: FontWeight.w600, height: 1.4),
+                                style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF6B7280), fontSize: 18, fontWeight: FontWeight.w600, height: 1.4),
                               ),
                             ],
                           ),
@@ -366,13 +406,15 @@ class LovableCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
             blurRadius: 24,
             spreadRadius: 0,
             offset: const Offset(0, 12),
@@ -404,7 +446,7 @@ class LovableCard extends StatelessWidget {
                   width: double.infinity,
                   color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
                   child: Center(
-                    child: Icon(_getIcon(), size: 48, color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
+                    child: Icon(_getIcon(), size: 48, color: Theme.of(context).colorScheme.primary.withOpacity(0.4)),
                   ),
                 ),
               ),
@@ -418,7 +460,7 @@ class LovableCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -431,7 +473,7 @@ class LovableCard extends StatelessWidget {
                       thing.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Color(0xFF111827), fontSize: 17, fontWeight: FontWeight.w800, height: 1.2),
+                      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontSize: 17, fontWeight: FontWeight.w800, height: 1.2),
                     ),
                     if (thing.subtitle.isNotEmpty) ...[
                       const SizedBox(height: 6),
@@ -439,7 +481,7 @@ class LovableCard extends StatelessWidget {
                         thing.subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.w500),
+                        style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.w500),
                       ),
                     ]
                   ],
@@ -461,19 +503,20 @@ class DetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF111827)),
+        iconTheme: IconThemeData(color: isDark ? Colors.white : const Color(0xFF111827)),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, 4))],
             ),
             child: IconButton(
               icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444)),
@@ -495,7 +538,7 @@ class DetailScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 30, offset: const Offset(0, 15)),
+                    BoxShadow(color: Colors.black.withOpacity(isDark ? 0.5 : 0.1), blurRadius: 30, offset: const Offset(0, 15)),
                   ],
                 ),
                 child: ClipRRect(
@@ -508,7 +551,7 @@ class DetailScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(thing.category, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
@@ -516,12 +559,12 @@ class DetailScreen extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               thing.title,
-              style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: Color(0xFF111827), height: 1.1, letterSpacing: -1),
+              style: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF111827), height: 1.1, letterSpacing: -1),
             ),
             const SizedBox(height: 24),
             Text(
               thing.subtitle,
-              style: const TextStyle(fontSize: 18, color: Color(0xFF4B5563), height: 1.6, fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 18, color: isDark ? Colors.grey[400] : const Color(0xFF4B5563), height: 1.6, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 48),
             if (thing.url != null)
