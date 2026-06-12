@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "123435358107",
+    "project_id": "things-collector",
+    "storage_bucket": "things-collector.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:123435358107:android:3b52de52d59829bf65f33e",
+        "android_client_info": {
+          "package_name": "com.example.things_collector"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZJNhuB7cLdJAXOfRTrJmfl5i2JyLrGzY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
