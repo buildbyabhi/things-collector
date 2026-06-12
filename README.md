@@ -1,17 +1,22 @@
-# things_collector
+# Things Collector
 
-A new Flutter project.
+A secure, private vault for storing and managing your "Things". Built as a Progressive Web App (PWA) using Flutter and Firebase.
 
-## Getting Started
+🌍 **Live Demo:** [https://things-collector.web.app](https://things-collector.web.app)
 
-This project is a starting point for a Flutter application.
+## Features
+- **Secure Authentication:** User accounts protected via Firebase Authentication (Google Sign-In & Email/Password).
+- **Private Data Vault:** Cloud Firestore database with strict security rules ensuring that only the authenticated owner can view or modify their data.
+- **Rich Metadata Extraction:** Automatically fetches titles, descriptions, and cover images from URLs using the `metadata_fetch` package.
+- **Cross-Platform:** Built with Flutter, fully optimized for Web and mobile browsers as an installable PWA.
 
-A few resources to get you started if this is your first Flutter project:
+## Tech Stack
+- **Frontend:** [Flutter](https://flutter.dev) (Web)
+- **Backend:** [Firebase](https://firebase.google.com) (Auth, Firestore, Hosting)
+- **Languages:** Dart
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Setup & Running Locally
+1. Clone this repository.
+2. Run `flutter pub get` to install dependencies.
+3. Connect your own Firebase Project by running `flutterfire configure`.
+4. Run the app using `flutter run -d chrome`.
