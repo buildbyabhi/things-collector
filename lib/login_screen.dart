@@ -92,28 +92,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, 4))],
-                  ),
-                  child: IconButton(
-                    icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded, color: isDark ? Colors.amber : const Color(0xFF6B7280)),
-                    onPressed: () {
-                      themeNotifier.value = isDark ? ThemeMode.light : ThemeMode.dark;
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ),
-
           // Main Login Card
           Center(
             child: SingleChildScrollView(
@@ -169,6 +147,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     TextField(
                       controller: _emailController,
+                      autofillHints: const [], // Disables browser autofill painting black boxes
+                      cursorColor: Theme.of(context).colorScheme.primary,
                       style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.w600),
                       decoration: InputDecoration(
                         hintText: 'Email address',
@@ -187,6 +167,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextField(
                       controller: _passwordController,
                       obscureText: true,
+                      autofillHints: const [], // Disables browser autofill painting black boxes
+                      cursorColor: Theme.of(context).colorScheme.primary,
                       style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.w600),
                       decoration: InputDecoration(
                         hintText: 'Password',
@@ -263,6 +245,29 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ]
                   ],
+                ),
+              ),
+            ),
+          ),
+          
+          // Render the toggle ON TOP of everything else
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                  ),
+                  child: IconButton(
+                    icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded, color: isDark ? Colors.amber : const Color(0xFF6B7280)),
+                    onPressed: () {
+                      themeNotifier.value = isDark ? ThemeMode.light : ThemeMode.dark;
+                    },
+                  ),
                 ),
               ),
             ),
