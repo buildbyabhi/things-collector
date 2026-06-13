@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'dart:convert';
+import 'dart:html' as html;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -131,7 +132,36 @@ class SyncService {
     });
   }
 
+  Future<void> updateThing(String id, String title, String subtitle, String category) async {
+    await _userCollection.doc(id).update({
+      'title': title,
+      'subtitle': subtitle,
+      'category': category,
+    });
+  }
+
   Future<void> deleteThing(String id) async {
     await _userCollection.doc(id).delete();
+  }
+
+  Future<void> exportData() async {
+    final snapshot = await _userCollection.orderBy('createdAt', descending: true).get();
+    final things = snapshot.docs.map((doc) => Thing.fromFirestore(doc)).toList();
+    
+    final List<Map<String, dynamic>> jsonList = things.map((t) => t.toMap()).toList();
+    // Convert Timestamps to ISO strings for export
+    for (var item in jsonList) {
+      if (item['createdAt'] is Timestamp) {
+        item['createdAt'] = (item['createdAt'] as Timestamp).toDate().toIso8601String();
+      }
+    }
+    
+    final jsonString = const JsonEncoder.withIndent('  ').convert(jsonList);
+    final blob = html.Blob([jsonString], 'application/json');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute('download', 'my_things_backup.json')
+      ..click();
+    html.Url.revokeObjectUrl(url);
   }
 }

@@ -87,6 +87,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final SyncService _syncService = SyncService();
   final AuthService _authService = AuthService();
   String _selectedFilter = 'All';
+  String _searchQuery = '';
+
   final List<String> _categories = ['All', 'Notes', 'Links', 'Ideas'];
 
   void _showAddDialog() {
@@ -345,6 +347,27 @@ class _HomeScreenState extends State<HomeScreen> {
                               boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, 4))],
                             ),
                             child: IconButton(
+                              icon: Icon(Icons.download_rounded, color: isDark ? Colors.blue[400] : Colors.blue),
+                              onPressed: () async {
+                                await _syncService.exportData();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: const Text('Data exported successfully!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                    behavior: SnackBarBehavior.floating,
+                                  ));
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                            ),
+                            child: IconButton(
                               icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded, color: isDark ? Colors.amber : const Color(0xFF6B7280)),
                               onPressed: () {
                                 themeNotifier.value = isDark ? ThemeMode.light : ThemeMode.dark;
@@ -371,6 +394,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 
+                // Search Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.03), blurRadius: 16, offset: const Offset(0, 8))],
+                    ),
+                    child: TextField(
+                      onChanged: (val) => setState(() => _searchQuery = val),
+                      style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                      decoration: InputDecoration(
+                        hintText: 'Search your things...',
+                        hintStyle: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[400]),
+                        prefixIcon: Icon(Icons.search_rounded, color: isDark ? Colors.grey[400] : Colors.grey),
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surface,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
                 // Categories
                 SizedBox(
                   height: 60,
@@ -419,6 +466,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (_selectedFilter != 'All') {
                         things = things.where((t) => t.category == _selectedFilter).toList();
                       }
+                      if (_searchQuery.isNotEmpty) {
+                        final q = _searchQuery.toLowerCase();
+                        things = things.where((t) => t.title.toLowerCase().contains(q) || t.subtitle.toLowerCase().contains(q)).toList();
+                      }
                       
                       if (things.isEmpty) {
                         return Center(
@@ -437,27 +488,35 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       }
 
-                      return GridView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 20,
-                          mainAxisSpacing: 20,
-                          childAspectRatio: 0.72,
-                        ),
-                        itemCount: things.length,
-                        itemBuilder: (context, index) {
-                          final thing = things[index];
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => DetailScreen(thing: thing, syncService: _syncService)));
-                            },
-                            onLongPress: () {
-                              _syncService.deleteThing(thing.id);
-                            },
-                            child: LovableCard(thing: thing),
-                          );
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          setState(() {});
                         },
+                        color: Theme.of(context).colorScheme.primary,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        child: GridView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 20,
+                            mainAxisSpacing: 20,
+                            childAspectRatio: 0.72,
+                          ),
+                          itemCount: things.length,
+                          itemBuilder: (context, index) {
+                            final thing = things[index];
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => DetailScreen(thing: thing, syncService: _syncService)));
+                              },
+                              onLongPress: () {
+                                _syncService.deleteThing(thing.id);
+                              },
+                              child: LovableCard(thing: thing),
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
@@ -518,12 +577,15 @@ class LovableCard extends StatelessWidget {
             if (thing.imageUrl != null)
               Expanded(
                 flex: 3,
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage(thing.imageUrl!),
-                      fit: BoxFit.cover,
+                child: Hero(
+                  tag: 'img-${thing.id}',
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage(thing.imageUrl!),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ),
@@ -531,12 +593,15 @@ class LovableCard extends StatelessWidget {
             else if (thing.imageBase64 != null)
               Expanded(
                 flex: 3,
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: MemoryImage(base64Decode(thing.imageBase64!)),
-                      fit: BoxFit.cover,
+                child: Hero(
+                  tag: 'img-${thing.id}',
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: MemoryImage(base64Decode(thing.imageBase64!)),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ),
@@ -614,6 +679,20 @@ class DetailScreen extends StatelessWidget {
         iconTheme: IconThemeData(color: isDark ? Colors.white : const Color(0xFF111827)),
         actions: [
           Container(
+            margin: const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+            ),
+            child: IconButton(
+              icon: Icon(Icons.edit_rounded, color: isDark ? Colors.blue[400] : Colors.blue),
+              onPressed: () {
+                _showEditDialog(context);
+              },
+            ),
+          ),
+          Container(
             margin: const EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
@@ -636,18 +715,21 @@ class DetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (thing.imageUrl != null || thing.imageBase64 != null) ...[
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(isDark ? 0.5 : 0.1), blurRadius: 30, offset: const Offset(0, 15)),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(32),
-                  child: thing.imageUrl != null 
-                    ? Image.network(thing.imageUrl!, width: double.infinity, fit: BoxFit.cover)
-                    : Image.memory(base64Decode(thing.imageBase64!), width: double.infinity, fit: BoxFit.cover),
+              Hero(
+                tag: 'img-${thing.id}',
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(32),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(isDark ? 0.5 : 0.1), blurRadius: 30, offset: const Offset(0, 15)),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(32),
+                    child: thing.imageUrl != null 
+                      ? Image.network(thing.imageUrl!, width: double.infinity, fit: BoxFit.cover)
+                      : Image.memory(base64Decode(thing.imageBase64!), width: double.infinity, fit: BoxFit.cover),
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
@@ -696,6 +778,107 @@ class DetailScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showEditDialog(BuildContext context) {
+    String title = thing.title;
+    String subtitle = thing.subtitle;
+    String selectedCategory = thing.category;
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        bool isDark = Theme.of(context).brightness == Brightness.dark;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+              child: Container(
+                width: 400,
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Edit Thing', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF111827))),
+                    const SizedBox(height: 24),
+                    TextFormField(
+                      initialValue: title,
+                      onChanged: (val) => title = val,
+                      style: TextStyle(fontSize: 18, color: isDark ? Colors.white : Colors.black),
+                      decoration: InputDecoration(
+                        labelText: 'Title',
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      initialValue: subtitle,
+                      onChanged: (val) => subtitle = val,
+                      maxLines: 3,
+                      minLines: 1,
+                      style: TextStyle(fontSize: 16, color: isDark ? Colors.grey[300] : Colors.black87),
+                      decoration: InputDecoration(
+                        labelText: 'Description or URL',
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: selectedCategory,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                      ),
+                      items: ['Notes', 'Links', 'Ideas'].map((cat) => DropdownMenuItem(value: cat, child: Text(cat, style: TextStyle(color: isDark ? Colors.white : Colors.black)))).toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => selectedCategory = val);
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: isSaving ? null : () async {
+                          setState(() => isSaving = true);
+                          try {
+                            await syncService.updateThing(thing.id, title, subtitle, selectedCategory);
+                            if (context.mounted) {
+                              Navigator.pop(context); // Close dialog
+                              Navigator.pop(context); // Close detail screen
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e', style: const TextStyle(color: Colors.white)), backgroundColor: Colors.red));
+                            }
+                          } finally {
+                            if (context.mounted) setState(() => isSaving = false);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: isSaving ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
