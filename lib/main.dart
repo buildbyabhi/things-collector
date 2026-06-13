@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:file_selector/file_selector.dart';
+import 'package:image_picker_web/image_picker_web.dart';
 import 'package:image/image.dart' as img;
 
 import 'firebase_options.dart';
@@ -183,14 +183,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: double.infinity,
                           child: OutlinedButton.icon(
                             onPressed: () async {
-                              final XTypeGroup typeGroup = XTypeGroup(
-                                label: 'images',
-                                extensions: <String>['jpg', 'png', 'jpeg'],
-                              );
-                              final XFile? image = await openFile(acceptedTypeGroups: <XTypeGroup>[typeGroup]);
-                              if (image != null) {
-                                final originalBytes = await image.readAsBytes();
-                                Uint8List finalBytes = originalBytes;
+                              try {
+                                final Uint8List? originalBytes = await ImagePickerWeb.getImageAsBytes();
+                                if (originalBytes != null) {
+                                  Uint8List finalBytes = originalBytes;
                                 
                                 // Compress if > 300KB to stay well under Firestore 1MB limit
                                 if (originalBytes.length > 300 * 1024) {
@@ -209,6 +205,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   selectedImageBytes = finalBytes;
                                   selectedImageMimeType = 'image/jpeg';
                                 });
+                                }
+                              } catch (e) {
+                                print('Picker error: $e');
                               }
                             },
                             icon: const Icon(Icons.image_rounded),
