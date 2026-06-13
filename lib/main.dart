@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:image/image.dart' as img;
 
 import 'firebase_options.dart';
@@ -183,8 +183,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: double.infinity,
                           child: OutlinedButton.icon(
                             onPressed: () async {
-                              final ImagePicker picker = ImagePicker();
-                              final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                              final XTypeGroup typeGroup = XTypeGroup(
+                                label: 'images',
+                                extensions: <String>['jpg', 'png', 'jpeg'],
+                              );
+                              final XFile? image = await openFile(acceptedTypeGroups: <XTypeGroup>[typeGroup]);
                               if (image != null) {
                                 final originalBytes = await image.readAsBytes();
                                 Uint8List finalBytes = originalBytes;
