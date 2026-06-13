@@ -1,11 +1,12 @@
 import 'dart:ui';
+import 'dart:ui' as ui;
 import 'dart:typed_data';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'firebase_options.dart';
 import 'sync_service.dart';
@@ -181,34 +182,30 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: double.infinity,
                           child: OutlinedButton.icon(
                             onPressed: () async {
-                              final FilePickerResult? result = await FilePicker.platform.pickFiles(
-                                type: FileType.image,
-                                withData: true,
-                              );
-                              if (result != null && result.files.isNotEmpty) {
-                                final originalBytes = result.files.first.bytes;
-                                if (originalBytes != null) {
-                                  Uint8List finalBytes = originalBytes;
-                                  
-                                  // Compress if > 500KB to stay well under Firestore 1MB limit
-                                  if (originalBytes.length > 500 * 1024) {
-                                    try {
-                                      final Codec codec = await instantiateImageCodec(originalBytes, targetWidth: 600);
-                                      final FrameInfo frameInfo = await codec.getNextFrame();
-                                      final ByteData? byteData = await frameInfo.image.toByteData(format: ImageByteFormat.png);
-                                      if (byteData != null) {
-                                        finalBytes = byteData.buffer.asUint8List();
-                                      }
-                                    } catch (e) {
-                                      print('Compression error: $e');
+                              final ImagePicker picker = ImagePicker();
+                              final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                              if (image != null) {
+                                final originalBytes = await image.readAsBytes();
+                                Uint8List finalBytes = originalBytes;
+                                
+                                // Compress if > 500KB to stay well under Firestore 1MB limit
+                                if (originalBytes.length > 500 * 1024) {
+                                  try {
+                                    final ui.Codec codec = await ui.instantiateImageCodec(originalBytes, targetWidth: 600);
+                                    final ui.FrameInfo frameInfo = await codec.getNextFrame();
+                                    final ByteData? byteData = await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
+                                    if (byteData != null) {
+                                      finalBytes = byteData.buffer.asUint8List();
                                     }
+                                  } catch (e) {
+                                    print('Compression error: $e');
                                   }
-
-                                  setState(() {
-                                    selectedImageBytes = finalBytes;
-                                    selectedImageMimeType = result.files.first.extension != null ? 'image/${result.files.first.extension}' : 'image/png';
-                                  });
                                 }
+
+                                setState(() {
+                                  selectedImageBytes = finalBytes;
+                                  selectedImageMimeType = image.mimeType ?? 'image/png';
+                                });
                               }
                             },
                             icon: const Icon(Icons.image_rounded),
