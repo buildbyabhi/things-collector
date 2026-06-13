@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 
 import 'firebase_options.dart';
 import 'sync_service.dart';
@@ -188,14 +189,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                 final originalBytes = await image.readAsBytes();
                                 Uint8List finalBytes = originalBytes;
                                 
-                                // Compress if > 500KB to stay well under Firestore 1MB limit
-                                if (originalBytes.length > 500 * 1024) {
+                                // Compress if > 300KB to stay well under Firestore 1MB limit
+                                if (originalBytes.length > 300 * 1024) {
                                   try {
-                                    final ui.Codec codec = await ui.instantiateImageCodec(originalBytes, targetWidth: 600);
-                                    final ui.FrameInfo frameInfo = await codec.getNextFrame();
-                                    final ByteData? byteData = await frameInfo.image.toByteData(format: ui.ImageByteFormat.png);
-                                    if (byteData != null) {
-                                      finalBytes = byteData.buffer.asUint8List();
+                                    final img.Image? decoded = img.decodeImage(originalBytes);
+                                    if (decoded != null) {
+                                      final img.Image resized = img.copyResize(decoded, width: 600);
+                                      finalBytes = img.encodeJpg(resized, quality: 60);
                                     }
                                   } catch (e) {
                                     print('Compression error: $e');
@@ -204,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                 setState(() {
                                   selectedImageBytes = finalBytes;
-                                  selectedImageMimeType = image.mimeType ?? 'image/png';
+                                  selectedImageMimeType = 'image/jpeg';
                                 });
                               }
                             },
@@ -241,8 +241,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                 } else {
                                   await _syncService.addThing(title, subtitle, selectedCategory);
                                 }
-                              } finally {
                                 if (context.mounted) Navigator.pop(context);
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save: $e', style: const TextStyle(color: Colors.white)), backgroundColor: Colors.red));
+                                }
+                              } finally {
+                                if (context.mounted) {
+                                  setState(() => isUploading = false);
+                                }
                               }
                             },
                             style: ElevatedButton.styleFrom(
