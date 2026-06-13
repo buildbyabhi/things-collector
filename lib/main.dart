@@ -1,8 +1,10 @@
 import 'dart:ui';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'firebase_options.dart';
 import 'sync_service.dart';
@@ -89,6 +91,9 @@ class _HomeScreenState extends State<HomeScreen> {
     String title = '';
     String subtitle = '';
     String selectedCategory = 'Notes';
+    Uint8List? selectedImageBytes;
+    String? selectedImageMimeType;
+    bool isUploading = false;
 
     showDialog(
       context: context,
@@ -98,88 +103,145 @@ class _HomeScreenState extends State<HomeScreen> {
             return Dialog(
               backgroundColor: Theme.of(context).colorScheme.surface,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-              child: Padding(
-                padding: const EdgeInsets.all(28.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Add New Thing', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontSize: 24, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 24),
-                    DropdownButtonFormField<String>(
-                      value: selectedCategory,
-                      dropdownColor: Theme.of(context).colorScheme.surface,
-                      icon: Icon(Icons.keyboard_arrow_down_rounded, color: isDark ? Colors.grey[400] : const Color(0xFF6B7280)),
-                      items: ['Notes', 'Links', 'Ideas']
-                          .map((c) => DropdownMenuItem(value: c, child: Text(c, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.w600))))
-                          .toList(),
-                      onChanged: (val) => setState(() => selectedCategory = val!),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.w500),
-                      decoration: InputDecoration(
-                        hintText: 'Title',
-                        hintStyle: TextStyle(color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)),
-                        filled: true,
-                        fillColor: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      ),
-                      onChanged: (val) => title = val,
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.w500),
-                      decoration: InputDecoration(
-                        hintText: 'Notes / URL Link',
-                        hintStyle: TextStyle(color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)),
-                        filled: true,
-                        fillColor: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      ),
-                      maxLines: 3,
-                      minLines: 1,
-                      onChanged: (val) => subtitle = val,
-                    ),
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: TextButton.styleFrom(
-                            foregroundColor: isDark ? Colors.grey[400] : const Color(0xFF6B7280),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          ),
-                          child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(28.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Add New Thing', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontSize: 24, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 24),
+                      DropdownButtonFormField<String>(
+                        value: selectedCategory,
+                        dropdownColor: Theme.of(context).colorScheme.surface,
+                        icon: Icon(Icons.keyboard_arrow_down_rounded, color: isDark ? Colors.grey[400] : const Color(0xFF6B7280)),
+                        items: ['Notes', 'Links', 'Ideas']
+                            .map((c) => DropdownMenuItem(value: c, child: Text(c, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.w600))))
+                            .toList(),
+                        onChanged: (val) => setState(() => selectedCategory = val!),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () {
-                            _syncService.addThing(title, subtitle, selectedCategory);
-                            Navigator.pop(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          ),
-                          child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.w500),
+                        decoration: InputDecoration(
+                          hintText: 'Title',
+                          hintStyle: TextStyle(color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)),
+                          filled: true,
+                          fillColor: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         ),
-                      ],
-                    ),
-                  ],
+                        onChanged: (val) => title = val,
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.w500),
+                        decoration: InputDecoration(
+                          hintText: 'Notes / URL Link',
+                          hintStyle: TextStyle(color: isDark ? Colors.grey[500] : const Color(0xFF9CA3AF)),
+                          filled: true,
+                          fillColor: isDark ? const Color(0xFF374151) : const Color(0xFFF3F4F6),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        ),
+                        maxLines: 3,
+                        minLines: 1,
+                        onChanged: (val) => subtitle = val,
+                      ),
+                      const SizedBox(height: 16),
+                      if (selectedImageBytes != null)
+                        Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.memory(selectedImageBytes!, height: 120, width: double.infinity, fit: BoxFit.cover),
+                            ),
+                            Positioned(
+                              top: 8, right: 8,
+                              child: Container(
+                                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                child: IconButton(
+                                  icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                                  onPressed: () => setState(() { selectedImageBytes = null; selectedImageMimeType = null; }),
+                                ),
+                              ),
+                            )
+                          ]
+                        )
+                      else
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final ImagePicker picker = ImagePicker();
+                              final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                              if (image != null) {
+                                final bytes = await image.readAsBytes();
+                                setState(() {
+                                  selectedImageBytes = bytes;
+                                  selectedImageMimeType = image.mimeType ?? 'image/png';
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.image_rounded),
+                            label: const Text('Add Screenshot', style: TextStyle(fontWeight: FontWeight.w600)),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              side: BorderSide(color: isDark ? const Color(0xFF4B5563) : const Color(0xFFD1D5DB)),
+                              foregroundColor: isDark ? Colors.grey[300] : const Color(0xFF4B5563),
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 32),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: isUploading ? null : () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              foregroundColor: isDark ? Colors.grey[400] : const Color(0xFF6B7280),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: isUploading ? null : () async {
+                              setState(() => isUploading = true);
+                              try {
+                                if (selectedImageBytes != null) {
+                                  await _syncService.uploadImageAndAddThing(title, subtitle, selectedCategory, selectedImageBytes!, selectedImageMimeType!);
+                                } else {
+                                  await _syncService.addThing(title, subtitle, selectedCategory);
+                                }
+                              } finally {
+                                if (context.mounted) Navigator.pop(context);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            child: isUploading 
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Text('Save', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );

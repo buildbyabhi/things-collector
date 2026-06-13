@@ -1,6 +1,8 @@
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:metadata_fetch/metadata_fetch.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class Thing {
   final String id;
@@ -99,6 +101,32 @@ class SyncService {
       'category': category,
       'imageUrl': imageUrl,
       'url': url,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> uploadImageAndAddThing(String title, String subtitle, String category, Uint8List imageBytes, String mimeType) async {
+    String? imageUrl;
+    
+    if (title.isEmpty) title = 'Screenshot';
+
+    try {
+      final extension = mimeType.split('/').last;
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.$extension';
+      final ref = FirebaseStorage.instance.ref().child('users/$_userId/things/$fileName');
+      
+      final uploadTask = await ref.putData(imageBytes, SettableMetadata(contentType: mimeType));
+      imageUrl = await uploadTask.ref.getDownloadURL();
+    } catch (e) {
+      print('Error uploading image: $e');
+    }
+
+    await _userCollection.add({
+      'title': title,
+      'subtitle': subtitle,
+      'category': category,
+      'imageUrl': imageUrl,
+      'url': null,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
