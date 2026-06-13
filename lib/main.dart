@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -181,7 +182,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: OutlinedButton.icon(
                             onPressed: () async {
                               final ImagePicker picker = ImagePicker();
-                              final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                              final XFile? image = await picker.pickImage(
+                                source: ImageSource.gallery,
+                                maxWidth: 800,
+                                maxHeight: 800,
+                                imageQuality: 60,
+                              );
                               if (image != null) {
                                 final bytes = await image.readAsBytes();
                                 setState(() {
@@ -501,6 +507,19 @@ class LovableCard extends StatelessWidget {
                   ),
                 ),
               )
+            else if (thing.imageBase64 != null)
+              Expanded(
+                flex: 3,
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: MemoryImage(base64Decode(thing.imageBase64!)),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              )
             else
               Expanded(
                 flex: 3,
@@ -595,7 +614,7 @@ class DetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (thing.imageUrl != null) ...[
+            if (thing.imageUrl != null || thing.imageBase64 != null) ...[
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(32),
@@ -605,7 +624,9 @@ class DetailScreen extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(32),
-                  child: Image.network(thing.imageUrl!, width: double.infinity, fit: BoxFit.cover),
+                  child: thing.imageUrl != null 
+                    ? Image.network(thing.imageUrl!, width: double.infinity, fit: BoxFit.cover)
+                    : Image.memory(base64Decode(thing.imageBase64!), width: double.infinity, fit: BoxFit.cover),
                 ),
               ),
               const SizedBox(height: 32),
